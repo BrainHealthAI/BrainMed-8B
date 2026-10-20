@@ -1,8 +1,8 @@
 # BrainMed-8B — medical-model adaptation and evaluation research
 
-Documentation reviewed on **20 October 2026**. This is a maintained fork of
-[BrainHealthAI/BrainMed-8B](https://github.com/BrainHealthAI/BrainMed-8B), preserving
-the original code, authorship and historical result files. It is not a new training run.
+Documentation reviewed on **20 October 2026**. This revision aligns the research claims
+with the archived evidence while preserving the original code, authorship and historical
+result files. It is not a new training run.
 
 ## Research summary
 
@@ -127,7 +127,7 @@ diagnostic claims plus the source passages that support each argument. This is
 a separate study, not a result already delivered by the current pipeline.
 
 See the [evidence recovery and publication checklist](docs/RESEARCH_PLAN.md).
-The related [HELIX training repository](https://github.com/zadbox/BRAIN-train)
+The related [HELIX training repository](https://github.com/BrainHealthAI/BRAIN-train/tree/Training_v2)
 and [consultation application](https://github.com/zadbox/helix-brain-health)
 have distinct model lineages and evaluation tasks; their scores must not be pooled.
 
@@ -175,7 +175,7 @@ and are not the current research summary.
 Original project: [BrainHealthAI/BrainMed-8B](https://github.com/BrainHealthAI/BrainMed-8B),
 historical evidence revision
 [`133424d`](https://github.com/BrainHealthAI/BrainMed-8B/tree/133424da08a4f14d426890a8e36f532eaaf693d2).
-Documentation corrections are maintained at [zadbox/BrainMed-8B](https://github.com/zadbox/BrainMed-8B).
+The 20 October 2026 documentation revision was prepared in [zadbox/BrainMed-8B](https://github.com/zadbox/BrainMed-8B) and merged here.
 
 ```bibtex
 @software{brainmed8b2026,

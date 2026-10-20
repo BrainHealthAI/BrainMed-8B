@@ -92,7 +92,7 @@ by language/specialty. Fix corpus versions; evaluate later updates separately.
 - Use the actual revision date, and identify historical experiment dates separately.
 - Round task scores and derived descriptive means to two decimals; do not subtract
   already-rounded means. Preserve raw values in machine-readable sources.
-- Cite original project ownership plus the maintained fork, not an unrelated account.
+- Cite the BrainHealthAI repositories with immutable revisions, not an unrelated account.
 - Remove stale figure alt-text identifiers; link directly to the relevant artifact.
 - Do not distribute a Word file alone if its source links require a sibling `Pieces/` directory.
 - Open with three findings and a short summary; keep limitations grouped and explicit.
