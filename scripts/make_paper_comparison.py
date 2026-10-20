@@ -196,10 +196,12 @@ def main():
         notes.append(f"Backbone shown with its published values ({args.backbone_published}), "
                      f"not the score measured on this harness.")
     if offset is not None:
-        notes.append(f"Harness offset measured on the untouched backbone: {offset:+.2f} pt vs the "
-                     f"published protocol. Subtract it before reading our-vs-published gaps.")
+        notes.append(f"Protocol gap on the untouched backbone: {offset:+.2f} pt. "
+                     "This is descriptive, not a correction factor transferable to other models.")
 
-    L = ["# Comparison against the published 7B-8B models", "",
+    L = ["# Legacy descriptive comparison — not evidence of superiority", "",
+         "> Historical visualization tool. Use REPORT.md for the current research "
+         "interpretation. Sorting scores from unmatched protocols is not a valid model ranking.", "",
          "Our rows are **measured by this pipeline**. Every other row is **transcribed from**",
          "MedReason (arXiv:2504.00993) and was not re-run.", ""]
     for n in notes:

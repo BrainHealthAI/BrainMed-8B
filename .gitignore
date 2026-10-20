@@ -8,8 +8,9 @@ ckpts/
 *.pth
 
 # ---- derived inputs, rebuilt by the pipeline -----------------------------------------
-# data/prepare_data.py and eval/build_benchmarks.py regenerate these byte-for-byte from
-# upstream; the manifests, with SHA-256 digests, are committed so a rebuild can be checked.
+# Rebuilding requires the exact historical source revisions. The benchmark manifest is
+# committed; the historical prepared-data manifest is not. Do not imply byte identity
+# merely because these scripts can fetch current upstream data.
 data/prepared/
 eval/benchmarks/*.jsonl
 external/

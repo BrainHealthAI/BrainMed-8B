@@ -8,10 +8,8 @@
 #   - each saved checkpoint (best-by-val-loss, epoch-1..N, last)
 #   - optional weight interpolations towards the backbone (SOUP_ALPHAS)
 #
-# Why sweep at all: val loss is a proxy for benchmark accuracy, not the same quantity. When
-# the requirement is "beat the backbone and beat every published model", the checkpoint that
-# ships has to be the one that demonstrably does it - which means measuring the candidates
-# rather than assuming the lowest-val-loss one wins.
+# Validation loss and task accuracy measure different quantities. This sweep is exploratory;
+# select candidates on a separate validation set before any independent final test.
 #
 # Selection bias, stated plainly: picking a checkpoint by its score on the same benchmarks
 # you then report is optimistic. Keep the val-loss checkpoint as the headline number, quote
@@ -77,5 +75,5 @@ echo
 echo "############ leaderboard ############"
 python scripts/make_report.py --results_dir ./results --out ./results/REPORT.md
 echo
-echo "Ship the candidate that PASSES both win conditions. If several do, prefer the one"
-echo "that also passes the no-regression gate against the backbone."
+echo "Exploratory sweep complete. These scores are not a release or superiority gate."
+echo "Use independent selection and final testing before making a performance claim."

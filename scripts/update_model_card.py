@@ -185,6 +185,11 @@ MedReason reasoning traces and verifier-checked medical-o1 traces.
 
 ## Results
 
+**Research limitation:** these are historical exploratory results, not evidence of
+superiority or clinical validity. Candidate selection reused the evaluation tasks;
+the alpha=0.3 sweep and final evaluation differ. Read the current GitHub research
+report, including the measured base and all candidate results, before interpretation.
+
 Accuracy (%) on the six benchmarks of MedReason Table 4. The **{args.display_name}** row was
 measured here; every other row is transcribed from the MedReason paper (arXiv:2504.00993) and
 was not re-run.
