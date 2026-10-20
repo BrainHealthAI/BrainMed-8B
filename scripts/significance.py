@@ -85,7 +85,7 @@ def main():
                 n_sig_worse += 1
                 verdict = "**worse**"
         else:
-            verdict = "no difference"
+            verdict = "not rejected"
         rows.append([SHORT.get(bench, bench), len(shared), round(acc_a, 2), round(acc_b, 2),
                      f"{acc_b - acc_a:+.2f}", b, c, f"{p:.3f}", verdict])
 
@@ -102,12 +102,15 @@ def main():
         better = args.b if tot_c > tot_b else args.a
         L += [f"Pooled, `{better}` is significantly better (p < {args.alpha}).", ""]
     else:
-        L += [f"Pooled, the two runs are **statistically indistinguishable** "
-              f"(p = {p_all:.3g}). Any average difference between them is within sampling noise.", ""]
+        L += [f"The pooled test does not reject its null hypothesis (p = {p_all:.3g}). "
+              "This does not demonstrate equivalence or rule out a meaningful effect.", ""]
     L += [f"Per benchmark: {n_sig_better} significantly better, {n_sig_worse} significantly "
-          f"worse, {len(rows) - n_sig_better - n_sig_worse} indistinguishable.", "",
+          f"worse, {len(rows) - n_sig_better - n_sig_worse} not rejected (nominal tests).", "",
           "Pooling treats benchmarks as one sample and so weights them by size; read it",
-          "alongside the per-benchmark rows, not instead of them.", ""]
+          "alongside the per-benchmark rows, not instead of them.",
+          "Head-answer scoring and question-text deduplication differ from the aggregate "
+          "max(head, tail) endpoint. Selection, multiplicity and case-family dependence "
+          "must be addressed before confirmatory inference.", ""]
 
     text = "\n".join(L)
     print(text)

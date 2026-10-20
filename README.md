@@ -1,237 +1,190 @@
-# BrainMed-8B
+# BrainMed-8B — medical-model adaptation and evaluation research
 
-**Training and evaluation pipeline for an 8B medical reasoning model.**
+Documentation reviewed on **20 October 2026**. This is a maintained fork of
+[BrainHealthAI/BrainMed-8B](https://github.com/BrainHealthAI/BrainMed-8B), preserving
+the original code, authorship and historical result files. It is not a new training run.
 
-[![Model](https://img.shields.io/badge/%F0%9F%A4%97%20Model-BrainMed--8B-orange)](https://huggingface.co/BrainHealthAI/BrainMed-8B)
-[![SFT variant](https://img.shields.io/badge/%F0%9F%A4%97%20Model-BrainMed--8B--SFT-orange)](https://huggingface.co/BrainHealthAI/BrainMed-8B-SFT)
-[![Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-MedReason--MedO1--46K-blue)](https://huggingface.co/datasets/Williamsanderson/MedReason-MedO1-Reasoning-46K)
-[![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
+## Research summary
 
-Full-parameter supervised fine-tuning of an 8B backbone on 44,351 verified medical
-chain-of-thought traces, evaluated on **10 benchmarks** with a reproducible harness, a
-measured harness-offset calibration, contamination accounting, and paired significance
-testing.
+1. **Continued supervised fine-tuning regressed on the historical six-task mean.**
+   The measured HuatuoGPT-o1-8B base scores 58.79%, versus 57.35% for epoch 3.
+2. **Interpolation largely recovers the base level; a robust improvement is not established.**
+   The selected sweep candidate scores 58.90%. Its later `final` evaluation scores
+   59.23%, with the difference confined to one task. Selection used the reported
+   evaluation tasks rather than an independent final test.
+3. **The useful research question is measurement reliability and negative transfer.**
+   Scoring, task weighting, repeated evaluation, previous data exposure and
+   checkpoint selection must be disentangled before attributing a gain to training.
 
-> **Research artefact. Not medical advice, not a medical device, not clinically validated.**
+These are medical question-answering results, not patient diagnostic accuracy,
+validated clinical reasoning, or calibrated probabilities. No new F1, clinical
+evaluation or model inference was performed for this documentation revision.
 
----
+### Recomputed historical results
 
-## Results
+Macro6 is the unweighted mean of MedBullets op4/op5, MedXpertQA, MedQA-4opt,
+MedMCQA and PubMedQA. Scores and differences below are computed from the stored
+two-decimal task scores, then rounded once for display. They are descriptive.
 
-Accuracy (%) on the six-benchmark suite used by the reference literature. `BrainMed-8B` rows
-are measured by this pipeline; every other row is transcribed from published tables.
+<!-- research-summary:start -->
+| Historical condition | Macro6 (%) | Difference vs base (points) |
+| --- | --- | --- |
+| Medical base | 58.79 | +0.00 |
+| SFT epoch 3 | 57.35 | -1.45 |
+| Interpolation alpha=0.3 — sweep | 58.90 | +0.11 |
+| Same-path final evaluation | 59.23 | +0.43 |
+<!-- research-summary:end -->
 
-| Model | MedBullets op4 | op5 | MedXpertQA | MedQA | MedMCQA | PubMedQA | **Avg** |
-|---|---|---|---|---|---|---|---|
-| Medical-Llama3-8B | 33.4 | 25.3 | 9.0 | 40.3 | 46.8 | 48.0 | 33.8 |
-| Mistral-7B-Instruct | 43.5 | 33.4 | 11.4 | 48.2 | 44.9 | 50.1 | 38.6 |
-| BioMistral-7B | 46.4 | 33.1 | 12.4 | 45.0 | 40.2 | 66.9 | 40.7 |
-| Medical-CoT-8B | 39.3 | 34.1 | 12.6 | 49.0 | 42.6 | 68.0 | 40.9 |
-| DeepSeek-R1-Distill-8B | 41.9 | 35.1 | 13.5 | 55.4 | 49.0 | 73.9 | 44.8 |
-| OpenBioLLM-8B | 39.2 | 35.7 | 10.7 | 57.7 | 54.1 | 74.1 | 45.3 |
-| Llama-3.1-8B-Instruct | 43.2 | 40.9 | 14.3 | 58.7 | 56.0 | 75.2 | 48.0 |
-| Qwen2.5-7B-Instruct | 50.0 | 41.6 | 12.6 | 57.0 | 55.6 | 72.7 | 48.2 |
-| HuatuoGPT-o1-8B (SFT) | 53.3 | 49.7 | 17.3 | 70.2 | 58.2 | 76.1 | 54.1 |
-| HuatuoGPT-o1-8B (RL) | 55.2 | 51.3 | 16.7 | 72.6 | 60.4 | 79.2 | 55.9 |
-| MedReason-8B | 57.5 | 55.5 | 19.0 | 71.8 | 60.7 | 79.4 | 57.3 |
-| **BrainMed-8B-SFT** | 58.77 | 56.82 | 18.08 | 72.11 | 61.20 | 77.10 | **57.35** |
-| **BrainMed-8B** | 62.01 | 54.87 | 18.63 | 76.67 | 64.07 | 79.10 | **59.23** |
+The complete five-interpolation grid, every archived run, all ten task results,
+re-evaluation discrepancy and published-protocol offset are in
+[the reproducible results report](results/REPORT.md). No cross-paper ranking is
+used as evidence that BrainMed outperforms other models.
 
-![Results table](results/figures/table_results.png)
+## Model and data lineage
 
-![Ranking against published 7B-8B medical LLMs](results/figures/fig8_paper_ranking.png)
+`Llama-3.1` is the underlying architecture family. The directly adapted checkpoint
+is [FreedomIntelligence/HuatuoGPT-o1-8B](https://huggingface.co/FreedomIntelligence/HuatuoGPT-o1-8B),
+already medically adapted through SFT and reinforcement learning.
+**BrainMed-8B-SFT** names the project's continued full-parameter SFT derivative;
+**BrainMed-8B** names its interpolation with that medical base. They are not new
+foundation-model architectures.
 
-### Full 10-benchmark suite
+The historical corpus is reported as **44,351 training traces and 923 validation
+rows**, combining [MedReason](https://huggingface.co/datasets/UCSC-VLAA/MedReason)
+and [medical-o1-reasoning-SFT](https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT)
+through [MedReason-MedO1-Reasoning-46K](https://huggingface.co/datasets/Williamsanderson/MedReason-MedO1-Reasoning-46K).
+The source identity is known; the exact historical prepared-data manifest and
+row-level revision mapping are not committed here. Those are different claims.
 
-| | MedQA | MedMCQA | PubMedQA | MMLU-Pro (Med) | MB op4 | MB op5 | MedXpertQA | HLE (med) | GPQA (Med) | MedQA 5-opt |
-|---|---|---|---|---|---|---|---|---|---|---|
-| n | 1273 | 4183 | 1000 | 1535 | 308 | 308 | 1449 | 103 | 390 | 1273 |
-| Backbone | 77.93 | 63.30 | 80.20 | 64.56 | 59.09 | 55.19 | 17.05 | 11.65 | 49.74 | 72.82 |
-| **BrainMed-8B** | 76.67 | **64.07** | 79.10 | **65.73** | **62.01** | 54.87 | **18.63** | 10.68 | **59.74** | **73.68** |
+Huatuo's own [training documentation](https://github.com/FreedomIntelligence/HuatuoGPT-o1)
+identifies medical-o1 as part of its training pipeline. Re-exposure to this source,
+and SFT after RL, are plausible explanations for negative transfer. The fraction
+of identical rows seen by the exact base checkpoint and their causal contribution
+have **not** been established by a controlled ablation.
 
+[Data preparation](data/prepare_data.py) checks preservation of question/reasoning
+text and can append an answer-format suffix. This is a transformation check, not
+physician validation of the traces. Overlap scanning and removal are separate:
+removal requires `--decontaminate`, and the historical summaries explicitly record
+`training_kept_contaminated_rows: true`.
 
+### Historical configuration and remaining provenance gaps
 
-**The clean claim.** `BrainMed-8B-SFT` — a plain supervised fine-tune, no post-processing —
-reaches **57.35** against MedReason-8B's published **57.3** on the same six benchmarks. That
-is what the training corpus buys, with nothing else added.
-
----
-
-## Method
-
-### Data
-
-44,351 chain-of-thought traces, the union of two verified sources, deduplicated and unified
-under a single `<think>/<answer>` constitution. The build **extracts, it does not generate**:
-`question` and `reasoning` are byte-identical to the source across all 45,274 rows, asserted
-at build time and aborting if violated. The only text transformation is a canonical
-`The answer is X.` appended to 17,083 rows (38.5%) where the letter is unambiguously
-recoverable from options already present in the question — verified to be a pure suffix,
-never a rewrite, and skipped whenever ambiguous.
-
-### Training configuration
-
-| | |
+| Component | Recorded recipe / evidence |
 |---|---|
-| Method | full-parameter supervised fine-tuning — no adapter, no LoRA |
-| Backbone | `FreedomIntelligence/HuatuoGPT-o1-8B` (Llama-3.1 architecture) |
-| Parameters | 8,030,261,248 across 291 tensors |
-| Architecture | vocab 128,256 · hidden 4,096 · 32 layers · 32 heads / 8 KV heads (GQA) · FFN 14,336 |
-| Training tokens | 35,096,633 per epoch → **105.3 M** over 3 epochs |
-| Sequence length | 4,096 (mean 791 tokens/row, p95 1,089, max 4,553) |
-| Learning rate | 5e-6, cosine schedule, 5% warmup |
-| Optimizer | AdamW, β = (0.9, 0.95), ε = 1e-8, weight decay 0.1 (norms excluded) |
-| Effective batch | **128** = micro-batch 4 × accumulation 8 × 4 GPUs |
-| Optimizer steps | 346 per epoch × 3 epochs = **1,038** |
-| Precision | bfloat16 |
-| Parallelism | DeepSpeed ZeRO-3, no offload, FlashAttention-2, gradient checkpointing |
-| Batching | length-grouped sampling |
-| Gradient clipping | 1.0 · seed 2002 |
-| Hardware | 4 × H100 80GB SXM |
+| Adaptation | Full-parameter SFT; not LoRA |
+| Base | HuatuoGPT-o1-8B; exact loaded weights/tokenizer hashes still needed |
+| Context / schedule | 4,096 tokens, 3 epochs, learning rate 5e-6 |
+| Effective batch | 128 (4 × 8 accumulation × 4 GPUs), reported recipe |
+| Infrastructure | BF16, DeepSpeed ZeRO-3, reported 4 × H100 80 GB |
+| Optimizer steps | Historical README: 1,038; research dossier: 1,041. Unresolved without `run_summary.json` / optimizer logs |
+| Checkpoint selection | Lowest validation loss identified epoch 2; later selection also inspected evaluation scores |
+| Interpolation | `theta = (1-alpha)*base + alpha*SFT`; alpha 0.3 selected historically |
 
-Validation loss runs every 50 optimizer steps on a held-out split of 923 rows, tracked
-**separately per data source** — the instrumentation that revealed the corpus was pulling the
-model toward one source's style rather than adding knowledge.
+Shared ancestry alone does not prove a flat loss basin, robustness or a
+beneficial interpolation path. [WiSE-FT](https://arxiv.org/abs/2109.01903) supplies
+methodological context, not evidence of a new contribution or clinical benefit here.
 
-![Training and validation loss](results/figures/fig4_training_curves.png)
+## Limitations
 
-> A finding worth recording: the checkpoint selected by lowest validation loss (epoch 2)
-> scored **1.44 points below** epoch 3 on the benchmarks. Validation loss on this corpus
-> tracks conformity to the training style, not medical accuracy.
+- **Test reuse and multiplicity:** epochs and five interpolation configurations
+  were evaluated on the same tasks. The selected score is exploratory.
+- **Repeatability:** sweep and final reference the same local model path but have
+  different scores. A path is not a weight hash; neither identity nor the cause
+  of the discrepancy can be settled from aggregates.
+- **Scoring:** [the scorer](eval/scorer.py) reports the larger of aggregate
+  head/tail accuracy and has option-text/fuzzy fallbacks. The historical
+  significance script uses head answers and keys records by question text,
+  collapsing duplicates. It is not the same endpoint as Macro6.
+- **Dependence:** the 11,822 task rows are not 11,822 independent patients or
+  unique cases. MedBullets and MedQA variants need family-level handling.
+- **Exposure:** flagged training/evaluation overlap was retained. A filtered
+  evaluation subset cannot undo previous training exposure, unknown base
+  exposure or selection on the evaluation tasks.
+- **Cross-paper comparisons:** the measured base differs from its published
+  task values by +2.89 points on average, up to +5.33 on MedQA. This descriptive
+  protocol gap is not a universal correction factor.
+- **Missing evidence:** raw per-question predictions, checkpoint hashes, exact
+  prepared-data manifest, complete training logs and independent repeats are
+  required. The historical p-value does not prove equivalence or that an
+  observed difference is only noise.
+- **Clinical scope:** QCM answer accuracy does not establish sound justification,
+  F1 by diagnosis, safety, calibration or performance on the application's
+  structured diagnostic JSON and ICD-10 task.
 
-### Post-training: weight interpolation (WiSE-FT)
+## Two separate research directions
 
-Fine-tuning improved the challenging clinical benchmarks and cost accuracy on knowledge
-recall. Rather than retrain, the shipped model recovers the trade-off by **linear weight
-interpolation** between the backbone and the fine-tuned checkpoint:
+**Near term — measurement and negative results.** Recover archived predictions,
+reconcile repeated evaluations of the same candidate, compare frozen extraction
+rules and case-family weighting on those outputs, then test an independently
+selected candidate on untouched cases. The primary question is whether an
+improvement over the **medical base** survives those controls. Recovery relative
+to a regressed SFT checkpoint alone is not a novel finding.
 
-```
-θ(α) = (1 − α) · θ_backbone + α · θ_fine-tuned
-```
+**Medium term — paired EN/FR/darija and evidence-grounded hypotheses.** Build
+traceable case families, obtain independent medical annotation, and evaluate
+diagnostic claims plus the source passages that support each argument. This is
+a separate study, not a result already delivered by the current pipeline.
 
-Applied element-wise across all 291 tensors — 8.03 billion parameters averaged. No data, no
-gradients, no training: two minutes of tensor arithmetic, then one evaluation pass per α.
+See the [evidence recovery and publication checklist](docs/RESEARCH_PLAN.md).
+The related [HELIX training repository](https://github.com/zadbox/BRAIN-train)
+and [consultation application](https://github.com/zadbox/helix-brain-health)
+have distinct model lineages and evaluation tasks; their scores must not be pooled.
 
-Both endpoints descend from the same pre-training initialisation, so they lie in the same
-loss basin and the straight path between them crosses no loss barrier (Frankle et al., 2020;
-Neyshabur et al., 2020). The average lands in a flatter region of the landscape, which is
-where the robustness comes from (Izmailov et al., 2018).
+## Reproduce the documentation without a GPU
 
-α was swept and every point evaluated:
-
-| α | 0.0 (backbone) | 0.3 | 0.5 | 0.7 | 1.0 (fine-tuned) |
-|---|---|---|---|---|---|
-| Avg over 6 benchmarks | 58.79 | **59.23** | 58.73 | 58.90 | 57.35 |
-
-The interpolation beats **both** endpoints — most visibly on MedBullets-op4 (62.01, against
-59.09 and 58.77) and MedXpertQA (18.63, against 17.05 and 18.08). Gains and losses do not
-progress at the same rate along the path: at α = 0.3 most of the gain is already captured
-while the losses have barely begun. `BrainMed-8B` ships at α = 0.3; `BrainMed-8B-SFT` is the
-α = 1.0 endpoint.
-
-**References.** Wortsman et al., *Robust fine-tuning of zero-shot models*
-([arXiv:2109.01903](https://arxiv.org/abs/2109.01903)) · Wortsman et al., *Model soups*
-([arXiv:2203.05482](https://arxiv.org/abs/2203.05482)) · Neyshabur et al., *What is being
-transferred in transfer learning?* ([arXiv:2008.11687](https://arxiv.org/abs/2008.11687)) ·
-Izmailov et al., *Averaging weights leads to wider optima*
-([arXiv:1803.05407](https://arxiv.org/abs/1803.05407)).
-
-### Evaluation
-
-10 benchmarks, 11,822 questions, **extracted from the reference repositories — none rebuilt,
-resampled or regenerated**. Provenance, expected row counts and SHA-256 digests in
-[`eval/benchmarks/manifest.json`](eval/benchmarks/manifest.json).
-
-Greedy decoding, strict answer prompt, `max(head, tail)` extraction. The training system
-prompt is applied at inference: dropping it is a train/serve mismatch that measurably lowers
-accuracy. Answer-format compliance is reported per benchmark, so an accuracy leaning on the
-scorer's fuzzy fallbacks is visible rather than absorbed.
-
-![BrainMed-8B against published 7B-8B medical LLMs](results/figures/fig_model_comparison.png)
-
----
-
-## Repository
-
-```
-data/prepare_data.py         corpus: download → contamination scan → verbatim assertion → manifest
-eval/build_benchmarks.py     benchmark bundle extracted from the reference repos, with checksums
-eval/eval.py · scorer.py     evaluation harness, dual raw / decontaminated scoring
-train/sft.py                 full-parameter SFT, ZeRO-3, per-source validation loss
-train/launch.sh              standard recipe   ·   launch_continued.sh   already-tuned backbone
-scripts/preflight.sh         credential, hardware and data checks + a 2-step run on the real model
-scripts/run_pipeline.sh      tmux orchestration, resumable stage by stage
-scripts/weight_soup.py       WiSE-FT interpolation
-scripts/sweep_candidates.sh  evaluate every checkpoint and every interpolation
-scripts/significance.py      McNemar exact paired test between two runs
-scripts/make_report.py       tables and win conditions   ·   make_figures.py   figures
-scripts/push_to_hf.py        upload behind a hard 8B parameter-count gate
-space/                       Gradio demo
-results/                     report, comparison, significance, figures, per-run summaries
-```
-
-## Quickstart
+Python 3.10+ standard library only; no network calls, model download or upload:
 
 ```bash
-export HF_TOKEN=...  WANDB_API_KEY=...
-
-bash scripts/setup_runpod.sh        # dependencies, tmux, reference repositories
-python eval/build_benchmarks.py     # 10 benchmarks, verified counts and checksums
-python data/prepare_data.py         # corpus + signed manifest
-
-bash scripts/preflight.sh           # ~5 min — must end on "0 failures"
-bash scripts/run_pipeline.sh        # baseline eval → train → eval → report → figures → upload
-tmux attach -t brainmed
+python scripts/make_report.py
+python scripts/make_report.py --check
+python -m unittest discover -s tests -v
 ```
 
-`preflight.sh` runs two real optimizer steps on the actual model with the actual DeepSpeed
-config. An OOM, a missing FlashAttention or a broken ZeRO configuration surfaces in five
-minutes rather than forty minutes into a billed run.
+The generator reads both committed flat summaries and the pipeline's nested
+summary layout. Conflicting copies of a run fail explicitly. It preserves the
+input JSON and updates `results/REPORT.md` plus the bounded summary above.
 
-Reproducing the shipped model from a trained checkpoint:
+## Training and inference tooling
 
-```bash
-python scripts/weight_soup.py --base FreedomIntelligence/HuatuoGPT-o1-8B \
-    --finetuned ./ckpts/<exp>/last --alpha 0.3 --out ./ckpts/<exp>/soup-last-a0.3
-MODEL=./ckpts/<exp>/soup-last-a0.3 RUN_NAME=brainmed-8b-final bash eval/run_eval.sh
+The original pipeline is preserved for reproducibility:
+
+```text
+data/prepare_data.py       corpus checks, overlap scan, optional removal, output manifest
+eval/build_benchmarks.py   task bundle and hashes
+eval/eval.py, scorer.py    historical inference and scoring
+train/sft.py               SFT, per-source validation and checkpoint summaries
+scripts/weight_soup.py     weight interpolation
+scripts/sweep_candidates.sh exploratory evaluation of multiple candidates
+scripts/significance.py   historical head-answer paired-count analysis
 ```
 
-## What is not in this repository
+GPU execution requires the original model/data access, pinned dependencies and
+run configuration. `scripts/run_pipeline.sh` includes training and Hugging Face
+publication stages: inspect its stages and destination before use. It is **not**
+the command for the CPU-only verification above.
 
-Model weights (16 GB per checkpoint) live on the
-[Hugging Face Hub](https://huggingface.co/BrainHealthAI/BrainMed-8B). The prepared corpus and
-the benchmark `.jsonl` files are regenerated byte-for-byte by `prepare_data.py` and
-`build_benchmarks.py`; their manifests, carrying SHA-256 digests, are committed so any
-rebuild can be verified.
+The weight repositories remain [BrainHealthAI/BrainMed-8B](https://huggingface.co/BrainHealthAI/BrainMed-8B)
+and [BrainHealthAI/BrainMed-8B-SFT](https://huggingface.co/BrainHealthAI/BrainMed-8B-SFT).
+This GitHub documentation update does not change their cards, weights or live
+deployments. Legacy comparison figures are [archived with a status notice](results/figures/README.md)
+and are not the current research summary.
 
-## Citation
+## Attribution and license
+
+Original project: [BrainHealthAI/BrainMed-8B](https://github.com/BrainHealthAI/BrainMed-8B),
+historical evidence revision
+[`133424d`](https://github.com/BrainHealthAI/BrainMed-8B/tree/133424da08a4f14d426890a8e36f532eaaf693d2).
+Documentation corrections are maintained at [zadbox/BrainMed-8B](https://github.com/zadbox/BrainMed-8B).
 
 ```bibtex
-@software{brainmed8b,
-  title  = {BrainMed-8B: a reproducible medical reasoning fine-tuning and evaluation pipeline},
+@software{brainmed8b2026,
+  title = {BrainMed-8B: medical reasoning adaptation and evaluation pipeline},
   author = {BrainResearch},
-  year   = {2026},
-  url    = {https://github.com/williamsassa/BrainMed-8B}
+  year = {2026},
+  url = {https://github.com/BrainHealthAI/BrainMed-8B}
 }
 ```
 
-The training corpus derives from
-[MedReason](https://huggingface.co/datasets/UCSC-VLAA/MedReason) and
-[medical-o1](https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT);
-the evaluation bundle and scorer derive from the MedReason and HuatuoGPT-o1 repositories.
-
-```bibtex
-@misc{wu2025medreason,
-  title={MedReason: Eliciting Factual Medical Reasoning Steps in LLMs via Knowledge Graphs},
-  author={Wu, Juncheng and others}, year={2025}, eprint={2504.00993}, archivePrefix={arXiv}
-}
-@misc{chen2024huatuogpto1,
-  title={HuatuoGPT-o1, Towards Medical Complex Reasoning with LLMs},
-  author={Chen, Junying and others}, year={2024}, eprint={2412.18925}, archivePrefix={arXiv}
-}
-```
-
-## License
-
-Apache-2.0. This is a research artefact: not a medical device, not clinically validated, and
-not to be used for decisions about any real person.
+[Apache-2.0](LICENSE) applies to this repository; upstream model and dataset terms
+must also be checked. Research artifact only; no clinical validation is claimed.
